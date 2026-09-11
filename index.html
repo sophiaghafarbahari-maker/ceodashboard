@@ -53,4 +53,508 @@
   .stat.gold { background:var(--gold-bg); border-color:transparent; }
   .stat.gold .label, .stat.gold .value { color:var(--gold); }
   .stat.unpaid { background:var(--unpaid-bg); border-color:transparent; }
-  .stat.
+  .stat.unpaid .label, .stat.unpaid .value { color:var(--unpaid); }
+  .filters { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+  .filter-btn { background:var(--surface); border:1px solid var(--border); color:var(--ink-soft); padding:7px 14px; border-radius:20px; font-size:13px; font-family:'Inter',sans-serif; cursor:pointer; }
+  .filter-btn.active { background:var(--ink); color:var(--bg); border-color:var(--ink); }
+  .tenant-card { background:var(--surface); border:1px solid var(--border); border-left:4px solid var(--border); border-radius:12px; padding:16px 18px 16px 16px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+  .tenant-card.is-paid { border-left-color:var(--paid); }
+  .tenant-card.is-unpaid { border-left-color:var(--unpaid); }
+  .tenant-info { flex:1; min-width:220px; }
+  .tenant-name-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .tenant-name { font-weight:600; font-size:15.5px; }
+  .type-tag { font-size:11px; padding:2px 8px; border-radius:20px; font-weight:500; }
+  .type-tag.kerja { background:var(--kerja-bg); color:var(--kerja); }
+  .type-tag.student { background:var(--student-bg); color:var(--student); }
+  .tenant-room { color:var(--clay); font-size:13px; margin-top:2px; }
+  .tenant-meta { color:var(--ink-soft); font-size:12.5px; margin-top:4px; line-height:1.5; }
+  .tenant-right { display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  .rent-amount { font-family:'Fraunces',serif; font-size:17px; font-weight:500; white-space:nowrap; }
+  .badge { font-size:12px; padding:4px 10px; border-radius:20px; font-weight:500; white-space:nowrap; }
+  .badge.paid { background:var(--paid-bg); color:var(--paid); }
+  .badge.unpaid { background:var(--unpaid-bg); color:var(--unpaid); }
+  .card-actions { display:flex; gap:6px; }
+  .icon-btn { background:none; border:1px solid var(--border); border-radius:7px; width:30px; height:30px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--ink-soft); font-size:14px; }
+  .icon-btn:hover { background:var(--bg); }
+  .icon-btn.mark-paid { color:var(--paid); border-color:var(--paid-bg); }
+  .icon-btn.mark-unpaid { color:var(--unpaid); border-color:var(--unpaid-bg); }
+  .empty { text-align:center; padding:60px 20px; color:var(--ink-soft); }
+  .empty .headline { font-family:'Fraunces',serif; font-size:19px; color:var(--ink); margin-bottom:6px; }
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(43,38,32,0.4); align-items:center; justify-content:center; padding:20px; z-index:50; }
+  .modal-overlay.open { display:flex; }
+  .modal { background:var(--surface); border-radius:14px; padding:26px; width:100%; max-width:440px; max-height:90vh; overflow-y:auto; }
+  .modal h2 { font-family:'Fraunces',serif; font-weight:500; font-size:20px; margin:0 0 18px; }
+  .field { margin-bottom:14px; }
+  .field label { display:block; font-size:12.5px; color:var(--ink-soft); margin-bottom:5px; }
+  .field input, .field select { width:100%; padding:9px 11px; border:1px solid var(--border); border-radius:7px; font-size:14px; font-family:'Inter',sans-serif; background:var(--bg); color:var(--ink); }
+  .field input:focus, .field select:focus { outline:2px solid var(--clay); outline-offset:-1px; }
+  .field-row { display:flex; gap:10px; }
+  .field-row .field { flex:1; }
+  .modal-actions { display:flex; gap:10px; margin-top:20px; }
+  .btn-secondary, .btn-primary { flex:1; padding:10px; border-radius:8px; font-size:14px; font-weight:500; font-family:'Inter',sans-serif; cursor:pointer; border:1px solid var(--border); }
+  .btn-secondary { background:var(--surface); color:var(--ink); }
+  .btn-primary { background:var(--ink); color:var(--bg); border-color:var(--ink); }
+  .err { color:var(--unpaid); font-size:12.5px; margin-top:-8px; margin-bottom:12px; display:none; }
+  .err.show { display:block; }
+  .delete-link { text-align:center; margin-top:14px; }
+  .delete-link button { background:none; border:none; color:var(--unpaid); font-size:13px; cursor:pointer; font-family:'Inter',sans-serif; }
+  @media (max-width:600px) {
+    .stats { grid-template-columns:repeat(2,1fr); }
+    .tenant-right { width:100%; justify-content:space-between; }
+  }
+</style>
+</head>
+<body>
+<script>
+window.onerror = function(msg, url, line, col, err) {
+  var el = document.getElementById('debugError');
+  if (el) {
+    el.style.display = 'block';
+    el.textContent = 'Ralat kod (bagitahu Claude): ' + msg + ' — baris ' + line + ', lajur ' + col;
+  }
+  return false;
+};
+</script>
+<div id="debugError" style="display:none; background:#B24B36; color:#fff; padding:10px 14px; font-family:monospace; font-size:12px; word-break:break-all;"></div>
+<div class="wrap">
+  <div id="storageNotice" style="display:none; background:var(--unpaid-bg); color:var(--unpaid); border:1px solid var(--unpaid); border-radius:8px; padding:10px 14px; font-size:13px; margin-bottom:16px;">
+    Storan pelayar disekat, jadi perubahan tidak dapat disimpan pada peranti ini. Cuba buka fail ini terus dalam pelayar (bukan dalam mod peribadi/incognito) untuk membolehkan penyimpanan.
+  </div>
+  <header>
+    <div>
+      <h1>Penyewa bilik Sek 7</h1>
+      <p class="subtitle" id="subtitle">Memuatkan data...</p>
+    </div>
+    <button class="btn-add" onclick="openModal()">+ Tambah penyewa</button>
+  </header>
+
+  <div class="header-actions" style="margin-bottom:18px; align-items:center;">
+    <button class="btn-backup" onclick="downloadBackup()">&#8681; Muat turun backup</button>
+    <span id="syncIndicator" style="font-size:12px; color:var(--ink-soft); align-self:center;"></span>
+  </div>
+
+  <div class="month-row">
+    <label for="monthSelect">Bulan:</label>
+    <select id="monthSelect" class="month-select" onchange="changeMonth(this.value)"></select>
+  </div>
+
+  <div class="stats">
+    <div class="stat info"><div class="label">Bilangan penyewa</div><div class="value" id="statTotal">0</div></div>
+    <div class="stat success"><div class="label">Sewa bulanan (RM)</div><div class="value" id="statRent">RM0</div></div>
+    <div class="stat gold"><div class="label">Jumlah deposit (RM)</div><div class="value" id="statDeposit">RM0</div></div>
+    <div class="stat unpaid"><div class="label">Belum bayar</div><div class="value" id="statUnpaid">0</div></div>
+  </div>
+
+  <div class="filters">
+    <button class="filter-btn active" data-filter="all" onclick="setFilter('all')">Semua</button>
+    <button class="filter-btn" data-filter="paid" onclick="setFilter('paid')">Sudah bayar</button>
+    <button class="filter-btn" data-filter="unpaid" onclick="setFilter('unpaid')">Belum bayar</button>
+  </div>
+
+  <div id="list"></div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h2 id="modalTitle">Tambah penyewa</h2>
+    <input type="hidden" id="editId">
+    <div class="field-row">
+      <div class="field"><label>Nama</label><input type="text" id="fName" placeholder="Nama penyewa"></div>
+      <div class="field"><label>Umur</label><input type="number" id="fAge" placeholder="19"></div>
+    </div>
+    <div class="err" id="errName">Nama mesti diisi</div>
+    <div class="field-row">
+      <div class="field">
+        <label>Kerja / student</label>
+        <select id="fType"><option value="KERJA">Kerja</option><option value="STUDENT">Student</option></select>
+      </div>
+      <div class="field"><label>Bilik</label><input type="text" id="fRoom" placeholder="SINGLE DEPAN"></div>
+    </div>
+    <div class="err" id="errRoom">Bilik mesti diisi</div>
+    <div class="field-row">
+      <div class="field"><label>Sewa bulanan (RM)</label><input type="number" id="fRent" placeholder="420"></div>
+      <div class="field"><label>Deposit (RM)</label><input type="number" id="fDeposit" placeholder="200"></div>
+    </div>
+    <div class="err" id="errRent">Sewa bulanan mesti diisi</div>
+    <div class="field-row">
+      <div class="field"><label>Kemasukan</label><input type="text" id="fMoveIn" placeholder="1 September"></div>
+      <div class="field"><label>Tempoh menyewa</label><input type="text" id="fTerm" placeholder="1 TAHUN"></div>
+    </div>
+    <div class="field"><label>Tarikh bayaran (bulan dipilih)</label><input type="text" id="fPayDate" placeholder="7/9/2026"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal()">Batal</button>
+      <button class="btn-primary" onclick="saveTenant()">Simpan</button>
+    </div>
+    <div class="delete-link" id="deleteLinkWrap" style="display:none">
+      <button onclick="deleteTenant()">Padam penyewa ini</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'tenants_sek7';
+const MONTH_NAMES = ['Januari','Februari','Mac','April','Mei','Jun','Julai','Ogos','September','Oktober','November','Disember'];
+
+// ====== TAMPAL URL APPS SCRIPT DI SINI BILA SUDAH DEPLOY ======
+const SHEET_API_URL = '';
+const POLL_INTERVAL_MS = 30000;
+// ================================================================
+
+let storageOk = true;
+let syncing = false;
+let lastSyncTime = null;
+let pollTimer = null;
+let tenants = [];
+let monthlyRecords = {};
+let currentMonth = '2026-09';
+let currentFilter = 'all';
+
+const seedTenants = [
+  { id:'t1', name:'AISYAH', age:19, type:'KERJA', room:'SINGLE DEPAN', moveIn:'August 2026', deposit:200, rent:420, term:'1 TAHUN' },
+  { id:'t2', name:'SYAFIKA', age:null, type:'KERJA', room:'SHARING BESAR', moveIn:'1 September', deposit:200, rent:350, term:'1 TAHUN' },
+  { id:'t3', name:'SARAH', age:30, type:'KERJA', room:'SINGLE BACK', moveIn:'1 September', deposit:200, rent:420, term:'1 TAHUN' },
+  { id:'t4', name:'NAJWA', age:null, type:'STUDENT', room:'SHARING MEDIUM', moveIn:'1 September', deposit:200, rent:320, term:'5 BULAN' },
+  { id:'t5', name:'NUR ASYIKIN', age:null, type:'STUDENT', room:'SHARING MEDIUM', moveIn:'1 September', deposit:200, rent:320, term:'5 BULAN' },
+  { id:'t6', name:'NUR ALIAH', age:null, type:'STUDENT', room:'SINGLE TENGAH', moveIn:'1 September', deposit:200, rent:400, term:'10 BULAN' }
+];
+const seedMonthlyRecords = {
+  '2026-09': {
+    't1': { paid:true, payDate:'7/8/2026' },
+    't2': { paid:false, payDate:'' },
+    't3': { paid:false, payDate:'' },
+    't4': { paid:false, payDate:'' },
+    't5': { paid:false, payDate:'' },
+    't6': { paid:true, payDate:'15/8/2026' }
+  }
+};
+
+function monthKeyToLabel(key) {
+  const [y, m] = key.split('-');
+  return MONTH_NAMES[parseInt(m,10)-1] + ' ' + y;
+}
+
+function buildMonthOptions() {
+  const sel = document.getElementById('monthSelect');
+  const keys = new Set(Object.keys(monthlyRecords));
+  keys.add(currentMonth);
+  for (let y = 2026; y <= 2027; y++) {
+    for (let m = 1; m <= 12; m++) {
+      keys.add(y + '-' + String(m).padStart(2,'0'));
+    }
+  }
+  const sorted = Array.from(keys).sort();
+  sel.innerHTML = sorted.map(k => '<option value="' + k + '"' + (k===currentMonth?' selected':'') + '>' + monthKeyToLabel(k) + '</option>').join('');
+}
+
+function downloadBackup() {
+  const payload = { tenants, monthlyRecords, currentMonth, exportedAt: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const today = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = 'backup-tenant-sek7-' + today + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+async function fetchFromSheet() {
+  syncing = true;
+  updateSyncIndicator();
+  try {
+    const res = await fetch(SHEET_API_URL, { method: 'GET' });
+    if (!res.ok) throw new Error('Respons tidak OK');
+    const data = await res.json();
+    if (!data || !data.tenants || !data.monthlyRecords) throw new Error('Format data tidak sah');
+    tenants = data.tenants;
+    monthlyRecords = data.monthlyRecords;
+    if (!currentMonth) currentMonth = '2026-09';
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ tenants, monthlyRecords, currentMonth })); } catch (e) {}
+    lastSyncTime = new Date();
+    syncing = false;
+    updateSyncIndicator();
+    return true;
+  } catch (e) {
+    console.error('Gagal segerak dari Google Sheet, guna data tempatan.', e);
+    syncing = false;
+    updateSyncIndicator();
+    return false;
+  }
+}
+
+async function pushToSheet() {
+  if (!SHEET_API_URL) return;
+  try {
+    await fetch(SHEET_API_URL, {
+      method: 'POST',
+      body: JSON.stringify({ tenants, monthlyRecords, currentMonth })
+    });
+    lastSyncTime = new Date();
+    updateSyncIndicator();
+  } catch (e) {
+    console.error('Gagal hantar kemaskini ke Google Sheet.', e);
+  }
+}
+
+function startPolling() {
+  if (!SHEET_API_URL || pollTimer) return;
+  pollTimer = setInterval(async () => {
+    const changedBefore = JSON.stringify({ tenants, monthlyRecords });
+    const ok = await fetchFromSheet();
+    if (ok) {
+      const changedAfter = JSON.stringify({ tenants, monthlyRecords });
+      if (changedBefore !== changedAfter) render();
+    }
+  }, POLL_INTERVAL_MS);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') fetchFromSheet().then(ok => { if (ok) render(); });
+  });
+}
+
+function updateSyncIndicator() {
+  const el = document.getElementById('syncIndicator');
+  if (!el || !SHEET_API_URL) return;
+  if (syncing) { el.textContent = 'Menyegerak...'; return; }
+  if (lastSyncTime) {
+    const secs = Math.max(0, Math.round((Date.now() - lastSyncTime.getTime())/1000));
+    el.textContent = 'Disegerak ' + secs + ' saat lalu';
+  }
+}
+setInterval(updateSyncIndicator, 5000);
+
+async function loadData() {
+  if (SHEET_API_URL) {
+    const ok = await fetchFromSheet();
+    if (ok) {
+      buildMonthOptions();
+      render();
+      startPolling();
+      return;
+    }
+  }
+  loadFromLocalStorage();
+}
+
+function loadFromLocalStorage() {
+  let raw = null;
+  try {
+    raw = localStorage.getItem(STORAGE_KEY);
+  } catch (e) {
+    storageOk = false;
+  }
+  let parsed = null;
+  if (raw) {
+    try { parsed = JSON.parse(raw); } catch (e) { parsed = null; }
+  }
+
+  if (Array.isArray(parsed)) {
+    tenants = parsed.map(t => ({ id:t.id, name:t.name, age:t.age, type:t.type, room:t.room, deposit:t.deposit, rent:t.rent, moveIn:t.moveIn, term:t.term }));
+    monthlyRecords = { '2026-09': {} };
+    parsed.forEach(t => { monthlyRecords['2026-09'][t.id] = { paid: !!t.paid, payDate: t.payDate || '' }; });
+    currentMonth = '2026-09';
+    persist();
+  } else if (parsed && parsed.tenants && parsed.monthlyRecords) {
+    tenants = parsed.tenants;
+    monthlyRecords = parsed.monthlyRecords;
+    currentMonth = parsed.currentMonth || '2026-09';
+  } else {
+    tenants = seedTenants;
+    monthlyRecords = seedMonthlyRecords;
+    currentMonth = '2026-09';
+    persist();
+  }
+
+  buildMonthOptions();
+  render();
+}
+
+function persist() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ tenants, monthlyRecords, currentMonth }));
+    storageOk = true;
+  } catch (e) {
+    storageOk = false;
+    console.error('Gagal menyimpan data', e);
+  }
+  updateStorageNotice();
+  if (SHEET_API_URL) pushToSheet();
+}
+
+function updateStorageNotice() {
+  const el = document.getElementById('storageNotice');
+  if (!el) return;
+  el.style.display = storageOk ? 'none' : 'block';
+}
+
+function getRecord(tenantId) {
+  const monthData = monthlyRecords[currentMonth] || {};
+  return monthData[tenantId] || { paid:false, payDate:'' };
+}
+
+function setRecord(tenantId, data) {
+  if (!monthlyRecords[currentMonth]) monthlyRecords[currentMonth] = {};
+  monthlyRecords[currentMonth][tenantId] = Object.assign({}, getRecord(tenantId), data);
+}
+
+function changeMonth(key) {
+  currentMonth = key;
+  persist();
+  render();
+}
+
+function formatRM(n) { return 'RM' + Math.round(n).toLocaleString('en-MY'); }
+
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function render() {
+  const total = tenants.length;
+  const totalRent = tenants.reduce((s,t) => s + Number(t.rent||0), 0);
+  const totalDeposit = tenants.reduce((s,t) => s + Number(t.deposit||0), 0);
+  const unpaidCount = tenants.filter(t => !getRecord(t.id).paid).length;
+
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statRent').textContent = formatRM(totalRent);
+  document.getElementById('statDeposit').textContent = formatRM(totalDeposit);
+  document.getElementById('statUnpaid').textContent = unpaidCount;
+  document.getElementById('subtitle').innerHTML = (total === 0 ? 'Belum ada penyewa direkod' : total + ' penyewa direkod') + ' &middot; ' + monthKeyToLabel(currentMonth);
+
+  const list = document.getElementById('list');
+  let filtered = tenants.filter(t => {
+    const rec = getRecord(t.id);
+    if (currentFilter === 'all') return true;
+    if (currentFilter === 'paid') return rec.paid;
+    return !rec.paid;
+  });
+  filtered.sort((a,b) => {
+    const pa = getRecord(a.id).paid, pb = getRecord(b.id).paid;
+    return (pa === pb) ? 0 : (pa ? 1 : -1);
+  });
+
+  if (filtered.length === 0) {
+    list.innerHTML = '<div class="empty"><div class="headline">' +
+      (total===0 ? 'Belum ada penyewa' : 'Tiada penyewa dalam kategori ini') +
+      '</div><p>' + (total===0 ? 'Tambah penyewa pertama untuk mula memantau bayaran.' : 'Cuba penapis lain.') + '</p></div>';
+    return;
+  }
+
+  list.innerHTML = filtered.map(t => {
+    const rec = getRecord(t.id);
+    const metaParts = [];
+    if (t.age) metaParts.push(t.age + ' tahun');
+    metaParts.push('Masuk ' + escapeHtml(t.moveIn || '-'));
+    metaParts.push('Tempoh ' + escapeHtml(t.term || '-'));
+    metaParts.push('Deposit ' + formatRM(t.deposit||0));
+    if (rec.payDate) metaParts.push('Bayar ' + escapeHtml(rec.payDate));
+
+    return '<div class="tenant-card ' + (rec.paid ? 'is-paid' : 'is-unpaid') + '">' +
+      '<div class="tenant-info">' +
+        '<div class="tenant-name-row"><span class="tenant-name">' + escapeHtml(t.name) + '</span>' +
+        '<span class="type-tag ' + (t.type==='STUDENT'?'student':'kerja') + '">' + (t.type==='STUDENT'?'Student':'Kerja') + '</span></div>' +
+        '<div class="tenant-room">' + escapeHtml(t.room) + '</div>' +
+        '<div class="tenant-meta">' + metaParts.join(' &middot; ') + '</div>' +
+      '</div>' +
+      '<div class="tenant-right">' +
+        '<div class="rent-amount">' + formatRM(t.rent) + '</div>' +
+        (rec.paid ? '<span class="badge paid">Sudah bayar</span>' : '<span class="badge unpaid">Belum bayar</span>') +
+        '<div class="card-actions">' +
+          '<button class="icon-btn ' + (rec.paid ? 'mark-unpaid' : 'mark-paid') + '" title="' + (rec.paid ? 'Tandakan belum bayar' : 'Tandakan sudah bayar') + '" onclick="togglePaid(\'' + t.id + '\')">' + (rec.paid ? '&#10005;' : '&#10003;') + '</button>' +
+          '<button class="icon-btn" title="Edit" onclick="openModal(\'' + t.id + '\')">&#9998;</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function setFilter(f) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === f));
+  render();
+}
+
+function togglePaid(id) {
+  const rec = getRecord(id);
+  setRecord(id, { paid: !rec.paid });
+  persist();
+  render();
+}
+
+function openModal(id) {
+  document.querySelectorAll('.err').forEach(e => e.classList.remove('show'));
+  document.getElementById('modalOverlay').classList.add('open');
+  document.getElementById('editId').value = id || '';
+  if (id) {
+    const t = tenants.find(x => x.id === id);
+    const rec = getRecord(id);
+    document.getElementById('modalTitle').textContent = 'Edit penyewa';
+    document.getElementById('fName').value = t.name;
+    document.getElementById('fAge').value = t.age || '';
+    document.getElementById('fType').value = t.type;
+    document.getElementById('fRoom').value = t.room;
+    document.getElementById('fRent').value = t.rent;
+    document.getElementById('fDeposit').value = t.deposit;
+    document.getElementById('fMoveIn').value = t.moveIn || '';
+    document.getElementById('fTerm').value = t.term || '';
+    document.getElementById('fPayDate').value = rec.payDate || '';
+    document.getElementById('deleteLinkWrap').style.display = 'block';
+  } else {
+    document.getElementById('modalTitle').textContent = 'Tambah penyewa';
+    ['fName','fAge','fRoom','fRent','fDeposit','fMoveIn','fTerm','fPayDate'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('fType').value = 'KERJA';
+    document.getElementById('deleteLinkWrap').style.display = 'none';
+  }
+}
+
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+
+function saveTenant() {
+  const name = document.getElementById('fName').value.trim();
+  const age = document.getElementById('fAge').value;
+  const type = document.getElementById('fType').value;
+  const room = document.getElementById('fRoom').value.trim();
+  const rent = document.getElementById('fRent').value;
+  const deposit = document.getElementById('fDeposit').value;
+  const moveIn = document.getElementById('fMoveIn').value.trim();
+  const term = document.getElementById('fTerm').value.trim();
+  const payDate = document.getElementById('fPayDate').value.trim();
+  const editId = document.getElementById('editId').value;
+
+  let valid = true;
+  document.getElementById('errName').classList.remove('show');
+  document.getElementById('errRoom').classList.remove('show');
+  document.getElementById('errRent').classList.remove('show');
+  if (!name) { document.getElementById('errName').classList.add('show'); valid = false; }
+  if (!room) { document.getElementById('errRoom').classList.add('show'); valid = false; }
+  if (!rent || Number(rent) <= 0) { document.getElementById('errRent').classList.add('show'); valid = false; }
+  if (!valid) return;
+
+  let tenantId = editId;
+  if (editId) {
+    const t = tenants.find(x => x.id === editId);
+    Object.assign(t, { name, age: age?Number(age):null, type, room, rent:Number(rent), deposit:Number(deposit||0), moveIn, term });
+  } else {
+    tenantId = 't_' + Date.now();
+    tenants.push({ id:tenantId, name, age: age?Number(age):null, type, room, rent:Number(rent), deposit:Number(deposit||0), moveIn, term });
+  }
+  setRecord(tenantId, { payDate });
+  persist();
+  closeModal();
+  render();
+}
+
+function deleteTenant() {
+  const editId = document.getElementById('editId').value;
+  tenants = tenants.filter(x => x.id !== editId);
+  Object.keys(monthlyRecords).forEach(mk => { if (monthlyRecords[mk][editId]) delete monthlyRecords[mk][editId]; });
+  persist();
+  closeModal();
+  render();
+}
+
+loadData();
+</script>
+</body>
+</html>
